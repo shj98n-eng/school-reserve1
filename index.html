@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta property="og:title" content="سجل الاحتياط الإلكتروني">
+    <meta property="og:description" content="المرحلة الابتدائية - بتعاوننا يخف التعب ويكبر الانجاز">
+    <meta property="og:image" content="Logo.png"> 
+    <meta property="og:type" content="website">
+    
+    <title>سجل الاحتياط الإلكتروني</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        :root { --dark-navy: #001f3f; --gold: #c5a059; --blue-bg: #5a9bd5; --white: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; margin: 0; padding-bottom: 60px; }
+
+        header {
+            background-color: var(--dark-navy); color: var(--white); padding: 60px 30px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border-bottom: 5px solid var(--gold);
+        }
+
+        .edit-btn {
+            position: absolute; left: 15px; top: 15px; background: rgba(255, 255, 255, 0.1);
+            color: var(--gold); border: 1px solid var(--gold); width: 40px; height: 40px;
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+
+        .logo-wrapper { position: absolute; right: 30px; top: 50px; }
+        .logo-wrapper img { width: 85px; height: auto; display: block; }
+
+        header h1 { margin: 10px 0 5px 0; font-size: 32px; font-weight: bold; }
+        
+        .primary-stage { 
+            font-size: 20px; 
+            color: var(--white); 
+            display: block; 
+            margin-bottom: 12px;
+            font-weight: normal;
+        }
+
+        .slogan { 
+            color: var(--gold); 
+            font-size: 24px; 
+            margin-bottom: 25px; 
+            font-weight: 300; 
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .manager-line { font-size: 22px; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; min-width: 280px; }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 15px; }
+
+        .announcement-card { 
+            background-color: var(--blue-bg); color: black; padding: 35px; border-radius: 15px; 
+            text-align: center; font-weight: bold; line-height: 2.8; font-size: 1.2rem; margin-bottom: 30px;
+        }
+
+        .table-scroll-container {
+            max-height: 500px; overflow-y: auto; overflow-x: auto; background: white;
+            border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #edf2f7; margin-bottom: 40px;
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
+        th { background: var(--dark-navy); color: white; position: sticky; top: 0; z-index: 10; }
+
+        .choice-btn { padding: 8px 15px; border: 1px solid #cbd5e0; border-radius: 8px; cursor: pointer; background: white; font-weight: bold; transition: 0.2s; }
+        .active-yes { background: #28a745 !important; color: white; border-color: #28a745; }
+        .active-no { background: #dc3545 !important; color: white; border-color: #dc3545; }
+
+        .input-field { width: 95%; padding: 10px; border: 1px solid #edf2f7; border-radius: 8px; font-family: inherit; }
+        .reason-box { background: #fff5f5; border: 1px solid #feb2b2; padding: 10px; border-radius: 10px; margin-top: 10px; }
+        
+        .admin-panel { background: #fffaf0; border: 2px solid var(--gold); padding: 30px; border-radius: 20px; margin-bottom: 30px; }
+        .admin-group { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 15px; margin-bottom: 20px; position: relative; }
+        
+        .btn-confirm { background: var(--dark-navy); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .btn-delete-group { position: absolute; left: 10px; top: 10px; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+        .archive-section { margin-top: 50px; border-top: 3px solid var(--dark-navy); padding-top: 30px; }
+        .archive-card { background: #f9f9f9; border-right: 8px solid var(--gold); padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; }
+        
+        .delete-archive-btn { position: absolute; left: 20px; top: 15px; background: #fee2e2; color: #dc3545; border: 1px solid #f87171; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; }
+
+        .hidden { display: none; }
+
+        @media (max-width: 850px) {
+            .logo-wrapper { position: static; margin-bottom: 20px; }
+            header { padding: 40px 15px; }
+            header h1 { font-size: 26px; }
+            .slogan { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="edit-btn" onclick="openAdmin()" title="الإعدادات">⚙</button>
+    <div class="logo-wrapper"><img src="Logo.png" alt="الشعار"></div>
+    <h1>سجل الاحتياط الإلكتروني</h1>
+    <span class="primary-stage">للمرحلة الابتدائية</span>
+    <div class="slogan">بتعاوننا يخف التعب ويكبر الانجاز</div>
+    <div class="manager-line">مديرة المدرسة: الجوهرة المطيري</div>
+</header>
+
+<div class="container">
+    <div id="admin-panel" class="admin-panel hidden">
+        <h3 style="text-align:center; color:var(--dark-navy);">لوحة التحكم في التكاليف</h3>
+        <button class="btn-add" onclick="addNewAbsentGroup()">➕ إضافة معلمة غائبة أخرى</button>
+        <div id="admin-groups-container"></div>
+        <hr>
+        <div style="text-align: center;">
+            <button class="btn-confirm" onclick="saveAdminData()">نشر التكليف الحالي (حفظ)</button>
+            <button class="btn-confirm" style="background:#28a745;" onclick="archiveCurrentData()">✅ حفظ واعتماد السجلات نهائياً</button>
+            <button class="btn-confirm" style="background:#dc3545;" onclick="resetCurrent()">مسح الكل</button>
+            <button class="btn-confirm" style="background:#6c757d;" onclick="closeAdmin()">إغلاق اللوحة</button>
+        </div>
+    </div>
+
+    <div id="display-area"></div>
+
+    <div class="archive-section">
+        <h2 style="color:var(--dark-navy); text-align: center;">📜 سجلات الاحتياط المعتمدة</h2>
+        <div id="archive-container"></div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBw-6A_B6K6f4E6y_4-S0GzZ6kXo8x_5l8",
+        databaseURL: "https://school-reserve-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const PASS = "edu99";
+    let isAdminAuthenticated = false;
+    let db = { groups: [] };
+    let currentArchives = {};
+
+    database.ref('liveData').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            db = snapshot.val();
+        } else {
+            db = { groups: [] };
+            addNewAbsentGroup();
+        }
+        renderUserTable();
+    });
+
+    database.ref('archives').on('value', (snapshot) => {
+        currentArchives = snapshot.val() || {};
+        renderArchives();
+    });
+
+    function addNewAbsentGroup() {
+        if (!db.groups) db.groups = [];
+        db.groups.push({
+            absent: '',
+            date: '',
+            rows: Array(6).fill().map(() => ({ name: '', class: '', choice: '', work: '', reason: '' }))
+        });
+        if (isAdminAuthenticated) renderAdminRows();
+    }
+
+    function openAdmin() {
+        let p = prompt("أدخل كلمة السر");
+        if(p === PASS) {
+            isAdminAuthenticated = true;
+            document.getElementById('admin-panel').classList.remove('hidden');
+            renderAdminRows();
+            renderArchives();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } else if (p !== null) {
+            alert("كلمة السر خاطئة!");
+        }
+    }
+
+    function closeAdmin() {
+        isAdminAuthenticated = false;
+        document.getElementById('admin-panel').classList.add('hidden');
+        renderArchives();
+        renderUserTable();
+    }
+
+    function removeGroup(idx) {
+        if(confirm("هل تريد حذف جدول هذه المعلمة من الشاشة الحالية؟")) {
+            db.groups.splice(idx, 1);
+            renderAdminRows();
+        }
+    }
+
+    function renderAdminRows() {
+        let container = document.getElementById('admin-groups-container');
+        container.innerHTML = '';
+        db.groups.forEach((group, gIdx) => {
+            let groupDiv = document.createElement('div');
+            groupDiv.className = 'admin-group';
+            let rowsHtml = '';
+            for (let rIdx = 0; rIdx < 6; rIdx++) {
+                let r = group.rows[rIdx] || { name: '', class: '' };
+                rowsHtml += `<div style="margin-bottom:8px;">حصة ${rIdx+1}: 
+                    <input type="text" oninput="updateDbRow(${gIdx}, ${rIdx}, 'name', this.value)" value="${r.name || ''}" class="input-field" style="width:40%" placeholder="المعلمة المكلفة"> 
+                    <input type="text" oninput="updateDbRow(${gIdx}, ${rIdx}, 'class', this.value)" value="${r.class || ''}" class="input-field" style="width:20%" placeholder="الفصل">
+                </div>`;
+            }
+            groupDiv.innerHTML = `
+                <button class="btn-delete-group" onclick="removeGroup(${gIdx})">حذف</button>
+                <div style="display:flex; gap:10px; margin-bottom:15px; margin-top:20px;">
+                    <input type="text" oninput="db.groups[${gIdx}].absent=this.value" value="${group.absent || ''}" placeholder="اسم المعلمة الغائبة" class="input-field">
+                    <input type="text" oninput="db.groups[${gIdx}].date=this.value" value="${group.date || ''}" placeholder="التاريخ" class="input-field">
+                </div>
+                ${rowsHtml}
+            `;
+            container.appendChild(groupDiv);
+        });
+    }
+
+    function updateDbRow(gIdx, rIdx, field, val) {
+        if(!db.groups[gIdx].rows[rIdx]) {
+            db.groups[gIdx].rows[rIdx] = { name: '', class: '', choice: '', work: '', reason: '' };
+        }
+        db.groups[gIdx].rows[rIdx][field] = val;
+    }
+
+    function saveAdminData() {
+        database.ref('liveData').set(db).then(() => {
+            alert("تم نشر التكاليف للسحابة بنجاح ✅");
+        });
+    }
+
+    function handleChoice(gIdx, rIdx, type) {
+        database.ref(`liveData/groups/${gIdx}/rows/${rIdx}/choice`).set(type);
+    }
+
+    function updateTeacherWork(gIdx, rIdx, val) {
+        database.ref(`liveData/groups/${gIdx}/rows/${rIdx}/work`).set(val);
+    }
+
+    function updateTeacherReason(gIdx, rIdx, val) {
+        database.ref(`liveData/groups/${gIdx}/rows/${rIdx}/reason`).set(val);
+    }
+
+    function renderUserTable() {
+        let displayArea = document.getElementById('display-area');
+        displayArea.innerHTML = '';
+        if (!db.groups) return;
+        db.groups.forEach((group, gIdx) => {
+            let tableRows = '';
+            for (let rIdx = 0; rIdx < 6; rIdx++) {
+                let r = group.rows[rIdx] || { name: '', class: '', choice: '', work: '', reason: '' };
+                
+                let actionContent = '---';
+                let executionContent = '---';
+
+                if (r.name && r.name.trim() !== "") {
+                    let reasonShow = r.choice === 'غير موافقة' ? 'block' : 'none';
+                    actionContent = `
+                        <button class="choice-btn ${r.choice==='موافقة'?'active-yes':''}" onclick="handleChoice(${gIdx},${rIdx},'موافقة')">موافقة</button>
+                        <button class="choice-btn ${r.choice==='غير موافقة'?'active-no':''}" onclick="handleChoice(${gIdx},${rIdx},'غير موافقة')">غير موافقة</button>
+                    `;
+                    executionContent = `
+                        <input type="text" class="input-field" value="${r.work || ''}" placeholder="اكتبي ما تم تنفيذه..." onchange="updateTeacherWork(${gIdx},${rIdx},this.value)">
+                        <div class="reason-box" style="display:${reasonShow}">
+                            <input type="text" class="input-field" value="${r.reason || ''}" placeholder="اذكري السبب هنا..." onchange="updateTeacherReason(${gIdx},${rIdx},this.value)">
+                        </div>
+                    `;
+                }
+
+                tableRows += `<tr>
+                    <td>${rIdx+1}</td>
+                    <td style="font-weight:bold">${r.name || '---'}</td>
+                    <td>${r.class || '---'}</td>
+                    <td>${actionContent}</td>
+                    <td>${executionContent}</td>
+                </tr>`;
+            }
+            displayArea.innerHTML += `
+                <div class="announcement-card">
+                    نظراً لغياب الزميلة : <span style="color:white; border-bottom:2px solid #fff;">${group.absent || '.......'}</span> لهذا اليوم <br>
+                    الموافق : <span style="color:white; border-bottom:2px solid #fff;">${group.date || '.......'}</span> هـ <br>
+                    آمل تسديد مكانها حسب الجدول الموضح والتوقيع بالعلم، ولكم جزيل الشكر
+                </div>
+                <div class="table-scroll-container">
+                    <table>
+                        <thead><tr><th>الحصة</th><th>اسم المعلمة</th><th>الفصل</th><th>التوقيع</th><th>ما تم تنفيذه في حصة الانتظار</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+            `;
+        });
+    }
+
+    function archiveCurrentData() {
+        if(!db.groups || db.groups.length === 0 || !db.groups[0].absent) return alert("لا يوجد بيانات نشطة.");
+        if(confirm("هل أنتِ متأكدة من أرشفة هذه البيانات ونقلها للسجلات المعتمدة؟")) {
+            db.groups.forEach(g => { if(g.absent) database.ref('archives').push(g); });
+            database.ref('liveData').set({ groups: [] }).then(() => { alert("تم الاعتماد والأرشفة بنجاح ✅"); });
+        }
+    }
+
+    function renderArchives() {
+        let container = document.getElementById('archive-container');
+        container.innerHTML = '';
+        let deleteStyle = isAdminAuthenticated ? 'display:block' : 'none';
+
+        Object.keys(currentArchives).reverse().forEach((id) => {
+            let a = currentArchives[id];
+            container.innerHTML += `
+                <div class="archive-card">
+                    <button class="delete-archive-btn" style="display:${deleteStyle}" onclick="deleteArchive('${id}')">🗑️ حذف نهائي</button>
+                    <h4>سجل المعلمة: ${a.absent} | التاريخ: ${a.date}</h4>
+                    <div class="table-scroll-container" style="max-height: 300px; border: none; box-shadow: none;">
+                        <table>
+                            <thead><tr><th>الحصة</th><th>المعلمة</th><th>الفصل</th><th>التوقيع</th><th>ما تم تنفيذه في حصة الاحتياط</th></tr></thead>
+                            <tbody>
+                                ${a.rows.map((r, i) => {
+                                    let statusText = '---';
+                                    let statusColor = 'black';
+                                    let execution = '---';
+
+                                    if (r.name && r.name.trim() !== "") {
+                                        statusText = r.choice === 'موافقة' ? 'موافقة' : (r.choice === 'غير موافقة' ? 'غير موافقة' : 'لم يوقع');
+                                        statusColor = r.choice === 'موافقة' ? 'green' : (r.choice === 'غير موافقة' ? 'red' : 'black');
+                                        execution = r.choice === 'موافقة' ? (r.work || '---') : (r.reason || '---');
+                                    }
+
+                                    return `
+                                    <tr>
+                                        <td>${i+1}</td>
+                                        <td>${r.name || '---'}</td>
+                                        <td>${r.class || '---'}</td>
+                                        <td style="color:${statusColor}; font-weight:bold">${statusText}</td>
+                                        <td>${execution}</td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function deleteArchive(id) {
+        if(confirm("هل أنتِ متأكدة من حذف هذا السجل؟")) {
+            database.ref(`archives/${id}`).remove().then(() => {
+                alert("تم حذف السجل بنجاح.");
+            });
+        }
+    }
+
+    function resetCurrent() {
+        if(confirm("سيتم مسح جميع الجداول الحالية من الشاشة الرئيسية، هل أنت متأكد؟")) {
+            database.ref('liveData').set({ groups: [] });
+        }
+    }
+</script>
+
+</body>
+</html>
